@@ -18,6 +18,7 @@ struct job {
     int length;
     int tickets; // number of tickets for lottery scheduling
     // TODO: add any other metadata you need to track here
+    struct job *before;
     struct job *next;
 };
 
@@ -25,9 +26,28 @@ struct job {
 struct job *head = NULL;
 
 
-void append_to(struct job **head_pointer, int arrival, int length, int tickets){
+void append_to(struct job **head_pointer, int arrival, int length, int tickets) {
 
     // TODO: create a new job and init it with proper data
+    struct job *j = (struct job *)malloc(sizeof(struct job));
+    j->id = numofjobs;
+    j->arrival = arrival;
+    j->length = length;
+    j->tickets = tickets;
+    j->before = NULL;
+    j->next = NULL;
+
+    struct job *cursor = *head_pointer;
+    if (cursor == NULL) {
+        *head_pointer = j;
+    } else {
+        while (cursor->next != NULL)
+            cursor = cursor->next;
+        j->before = cursor;
+        cursor->next = j;
+    }
+
+    numofjobs++;
     return;
 }
 
@@ -70,7 +90,22 @@ void policy_SJF()
 {
     printf("Execution trace with SJF:\n");
 
+    
+
     // TODO: implement SJF policy
+    int time = 0;
+    struct job *cursor = head;
+    while (head != NULL) {
+        int runtime = cursor->length;
+        if (cursor->next->length < cursor->length)
+            runtime = cursor->length - cursor->next->length;
+        printf("t=%d: [Job %d] arrived at [%d], ran for: [%d]\n",
+            time,
+            cursor->id,
+            cursor->arrival,
+            runtime);
+    }
+
 
     printf("End of execution with SJF.\n");
 
@@ -120,9 +155,18 @@ void policy_LT(int slice)
 
 void policy_FIFO(){
     printf("Execution trace with FIFO:\n");
-
-    // TODO: implement FIFO policy
-
+    int time = head->arrival;
+    while (head != NULL) {
+        printf("t=%d: [Job %d] arrived at [%d], ran for: [%d]\n",
+            time,
+            head->id,
+            head->arrival,
+            head->length);
+        time += head->length;
+        head = head->next;
+        if (head != NULL)
+            free(head->before);
+    }
     printf("End of execution with FIFO.\n");
 }
 
@@ -166,6 +210,7 @@ int main(int argc, char **argv){
     }
     else if (strcmp(pname, "SJF") == 0)
     {
+        policy_SJF();
         // TODO
     }
     else if (strcmp(pname, "STCF") == 0)
